@@ -6,5 +6,5 @@ public enum ParseStrategy: String {
 }
 
 @freestanding(expression)
-public macro Date(_ value: any StringProtocol, strategy: ParseStrategy) -> Date =
+public macro Date(_ value: any StringProtocol, strategy: ParseStrategy = .iso8601) -> Date =
 	#externalMacro(module: "CompileSafeInitMacroImplementation", type: "DateMacro")

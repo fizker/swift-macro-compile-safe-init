@@ -5,7 +5,7 @@ import SwiftSyntaxMacros
 enum ParseStrategy: String {
 	case iso8601
 
-	var date: Date.ISO8601FormatStyle {
+	var formatStyle: Date.ISO8601FormatStyle {
 		switch self {
 		case .iso8601: .iso8601
 		}
@@ -26,21 +26,21 @@ public enum DateMacro: ExpressionMacro {
 			throw CustomError.message("#Date requires a static string literal")
 		}
 
-		let strategy = try find("strategy", in: node.arguments)
+		let strategy = find("strategy", in: node.arguments) ?? .iso8601
 
-		guard let _ = try? Date(literalSegment.content.text, strategy: .iso8601)
+		guard let _ = try? Date(literalSegment.content.text, strategy: strategy.formatStyle)
 		else { throw CustomError.message("malformed date: \(argument)") }
 
 		return "try! Date(\(argument), strategy: .\(raw: strategy.rawValue))"
 	}
 
-	private static func find(_ label: String, in arguments: LabeledExprListSyntax) throws -> ParseStrategy {
+	private static func find(_ label: String, in arguments: LabeledExprListSyntax) -> ParseStrategy? {
 		guard
 			let arg = arguments.first(where: { $0.label?.text == label }),
-			let memberAccess = arg.expression.as(MemberAccessExprSyntax.self),
-			let strategy = ParseStrategy(rawValue: memberAccess.declName.baseName.text)
-		else { throw CustomError.message("#Date requires a strategy") }
+			let memberAccess = arg.expression.as(MemberAccessExprSyntax.self)
+		else { return nil }
 
+		let strategy = ParseStrategy(rawValue: memberAccess.declName.baseName.text)
 		return strategy
 	}
 }
